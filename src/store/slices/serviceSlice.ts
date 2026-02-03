@@ -1,5 +1,6 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Service, ServiceCategory, ServiceProvider, SearchFilters, SearchResult } from '../../types';
+import { firebaseService } from '../../services/api/firebaseService';
 
 interface ServiceState {
   categories: ServiceCategory[];
@@ -21,18 +22,43 @@ const initialState: ServiceState = {
   error: null,
 };
 
+// Async Thunks para conectar con Firebase/API
+export const fetchServiceCategories = createAsyncThunk(
+  'service/fetchCategories',
+  async (_, { rejectWithValue }) => {
+    try {
+      const result = await firebaseService.getServiceCategories();
+      if (!result.success) {
+        return rejectWithValue(result.error);
+      }
+      return result.categories!;
+    } catch (error) {
+      return rejectWithValue('Error de conexión');
+    }
+  }
+);
+
+export const fetchProvidersByCategory = createAsyncThunk(
+  'service/fetchProvidersByCategory',
+  async (categoryId: string, { rejectWithValue }) => {
+    try {
+      const result = await firebaseService.getProvidersByCategory(categoryId);
+      if (!result.success) {
+        return rejectWithValue(result.error);
+      }
+      return result.providers!;
+    } catch (error) {
+      return rejectWithValue('Error de conexión');
+    }
+  }
+);
+
 const serviceSlice = createSlice({
   name: 'service',
   initialState,
   reducers: {
-    setCategories: (state, action: PayloadAction<ServiceCategory[]>) => {
-      state.categories = action.payload;
-    },
     setServices: (state, action: PayloadAction<Service[]>) => {
       state.services = action.payload;
-    },
-    setProviders: (state, action: PayloadAction<ServiceProvider[]>) => {
-      state.providers = action.payload;
     },
     setSearchResults: (state, action: PayloadAction<SearchResult>) => {
       state.searchResults = action.payload;
@@ -43,31 +69,51 @@ const serviceSlice = createSlice({
     clearSearchFilters: (state) => {
       state.searchFilters = {};
     },
-    setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload;
-    },
-    setError: (state, action: PayloadAction<string | null>) => {
-      state.error = action.payload;
-    },
-    clearServiceData: (state) => {
-      state.searchResults = null;
-      state.searchFilters = {};
-      state.loading = false;
+    clearError: (state) => {
       state.error = null;
     },
+  },
+  extraReducers: (builder) => {
+    // Fetch Service Categories
+    builder
+      .addCase(fetchServiceCategories.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchServiceCategories.fulfilled, (state, action) => {
+        state.loading = false;
+        state.categories = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchServiceCategories.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      
+    // Fetch Providers by Category
+    builder
+      .addCase(fetchProvidersByCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchProvidersByCategory.fulfilled, (state, action) => {
+        state.loading = false;
+        state.providers = action.payload;
+        state.error = null;
+      })
+      .addCase(fetchProvidersByCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      });
   },
 });
 
 export const {
-  setCategories,
   setServices,
-  setProviders,
   setSearchResults,
   updateSearchFilters,
   clearSearchFilters,
-  setLoading,
-  setError,
-  clearServiceData,
+  clearError,
 } = serviceSlice.actions;
 
 export default serviceSlice.reducer;
