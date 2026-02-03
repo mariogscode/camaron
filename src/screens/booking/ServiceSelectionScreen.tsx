@@ -12,9 +12,9 @@ import {
 import { Searchbar, IconButton } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types';
+import { SearchStackParamList } from '../../types';
 
-type ServiceSelectionNavigationProp = StackNavigationProp<RootStackParamList>;
+type ServiceSelectionNavigationProp = StackNavigationProp<SearchStackParamList, 'ServiceSelection'>;
 
 interface ServiceCategory {
   id: string;
@@ -67,14 +67,11 @@ export default function ServiceSelectionScreen() {
 
   const handleServiceSelect = (serviceCategory: ServiceCategory) => {
     console.log('Selected service:', serviceCategory.name);
-    // Navigate to BookingStack and pass initial route
-    navigation.navigate('BookingStack', {
-      screen: 'ProviderList',
-      params: { 
-        categoryId: serviceCategory.id,
-        categoryName: serviceCategory.name 
-      }
-    } as any);
+    // Navigate directly to ProviderList within the SearchStack
+    navigation.navigate('ProviderList', { 
+      categoryId: serviceCategory.id,
+      categoryName: serviceCategory.name 
+    });
   };
 
   const handleBack = () => {

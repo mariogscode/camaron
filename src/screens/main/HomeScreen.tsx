@@ -6,11 +6,16 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { useDispatch } from 'react-redux';
 import { logout } from '../../store/slices/authSlice';
 import { useDebugAuth } from '../../utils/useDebugAuth';
-import { RootStackParamList } from '../../types';
+import { HomeStackParamList, MainTabParamList } from '../../types';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { CompositeNavigationProp } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
-type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+type HomeScreenNavigationProp = CompositeNavigationProp<
+  StackNavigationProp<HomeStackParamList, 'HomeMain'>,
+  BottomTabNavigationProp<MainTabParamList>
+>;
 
 export default function HomeScreen() {
   const navigation = useNavigation<HomeScreenNavigationProp>();
@@ -20,7 +25,8 @@ export default function HomeScreen() {
   const handleSearchService = () => {
     // Navigate to service search/booking flow
     console.log('🔍 HomeScreen - Buscar Servicio clicked');
-    navigation.navigate('ServiceSelection');
+    // Navigate to the Search tab, which will then navigate to ServiceSelection
+    navigation.navigate('Search');
   };
 
   const handleProvideService = () => {

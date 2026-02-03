@@ -106,13 +106,6 @@ export type RootStackParamList = {
   LaunchScreen: undefined;
   AuthStack: undefined;
   MainTabs: undefined;
-  BookingStack: {
-    screen: keyof BookingStackParamList;
-    params?: any;
-  } | undefined;
-  MapScreen: undefined;
-  AccountSettings: undefined;
-  ServiceSelection: undefined;
 };
 
 export type AuthStackParamList = {
@@ -128,7 +121,8 @@ export type MainTabParamList = {
   Profile: undefined;
 };
 
-export type BookingStackParamList = {
+export type SearchStackParamList = {
+  SearchMain: undefined;
   ServiceSelection: undefined;
   ProviderList: { 
     categoryId: string;
@@ -145,6 +139,22 @@ export type BookingStackParamList = {
   };
   BookingConfirmation: { bookingId: string };
 };
+
+export type HomeStackParamList = {
+  HomeMain: undefined;
+};
+
+export type BookingsStackParamList = {
+  BookingsMain: undefined;
+};
+
+export type ProfileStackParamList = {
+  ProfileMain: undefined;
+  AccountSettings: undefined;
+};
+
+// Mantener compatibilidad con el código existente
+export type BookingStackParamList = SearchStackParamList;
 
 // API Response Types
 export interface ApiResponse<T> {

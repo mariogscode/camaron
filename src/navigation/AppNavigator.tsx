@@ -29,7 +29,71 @@ import { RootStackParamList, AuthStackParamList, MainTabParamList, BookingStackP
 const RootStack = createStackNavigator<RootStackParamList>();
 const AuthStack = createStackNavigator<AuthStackParamList>();
 const MainTabs = createBottomTabNavigator<MainTabParamList>();
-const BookingStack = createStackNavigator<BookingStackParamList>();
+
+// Stack Navigators for each Tab
+const HomeStack = createStackNavigator();
+const SearchStack = createStackNavigator();
+const BookingsStack = createStackNavigator();
+const ProfileStack = createStackNavigator();
+
+// Home Stack Navigator
+function HomeStackNavigator() {
+  return (
+    <HomeStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+    </HomeStack.Navigator>
+  );
+}
+
+// Search Stack Navigator (con todo el flujo de servicios)
+function SearchStackNavigator() {
+  return (
+    <SearchStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <SearchStack.Screen name="SearchMain" component={SearchScreen} />
+      <SearchStack.Screen name="ServiceSelection" component={ServiceSelectionScreen} />
+      <SearchStack.Screen name="ProviderList" component={ProviderListScreen} />
+      <SearchStack.Screen name="ProviderDetails" component={ProviderDetailsScreen} />
+      <SearchStack.Screen name="BookingCalendar" component={BookingCalendarScreen} />
+      <SearchStack.Screen name="BookingReview" component={BookingReviewScreen} />
+      <SearchStack.Screen name="BookingConfirmation" component={BookingConfirmationScreen} />
+    </SearchStack.Navigator>
+  );
+}
+
+// Bookings Stack Navigator
+function BookingsStackNavigator() {
+  return (
+    <BookingsStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <BookingsStack.Screen name="BookingsMain" component={BookingsScreen} />
+    </BookingsStack.Navigator>
+  );
+}
+
+// Profile Stack Navigator
+function ProfileStackNavigator() {
+  return (
+    <ProfileStack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
+      <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+      <ProfileStack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+    </ProfileStack.Navigator>
+  );
+}
 
 // Auth Stack Navigator
 function AuthStackNavigator() {
@@ -61,7 +125,7 @@ function MainTabsNavigator() {
     >
       <MainTabs.Screen 
         name="Home" 
-        component={HomeScreen}
+        component={HomeStackNavigator}
         options={{
           tabBarLabel: 'Inicio',
           tabBarIcon: ({ color, size }) => (
@@ -71,7 +135,7 @@ function MainTabsNavigator() {
       />
       <MainTabs.Screen 
         name="Search" 
-        component={SearchScreen}
+        component={SearchStackNavigator}
         options={{
           tabBarLabel: 'Buscar',
           tabBarIcon: ({ color, size }) => (
@@ -81,7 +145,7 @@ function MainTabsNavigator() {
       />
       <MainTabs.Screen 
         name="Bookings" 
-        component={BookingsScreen}
+        component={BookingsStackNavigator}
         options={{
           tabBarLabel: 'Reservas',
           tabBarIcon: ({ color, size }) => (
@@ -91,50 +155,15 @@ function MainTabsNavigator() {
       />
       <MainTabs.Screen 
         name="Profile" 
-        component={ProfileScreen}
+        component={ProfileStackNavigator}
         options={{
           tabBarLabel: 'Perfil',
+          tabBarIcon: ({ color, size }) => (
+            <Text style={{ fontSize: size, color }}>👤</Text>
+          ),
         }}
       />
     </MainTabs.Navigator>
-  );
-}
-
-// Booking Stack Navigator
-function BookingStackNavigator() {
-  return (
-    <BookingStack.Navigator>
-      <BookingStack.Screen 
-        name="ServiceSelection" 
-        component={ServiceSelectionScreen}
-        options={{ title: 'Selecciona un Servicio' }}
-      />
-      <BookingStack.Screen 
-        name="ProviderList" 
-        component={ProviderListScreen}
-        options={{ title: 'Colaboradores' }}
-      />
-      <BookingStack.Screen 
-        name="ProviderDetails" 
-        component={ProviderDetailsScreen}
-        options={{ title: 'Perfil Colaborador' }}
-      />
-      <BookingStack.Screen 
-        name="BookingCalendar" 
-        component={BookingCalendarScreen}
-        options={{ title: 'Seleccionar Horario' }}
-      />
-      <BookingStack.Screen 
-        name="BookingReview" 
-        component={BookingReviewScreen}
-        options={{ title: 'Revisar y Confirmar' }}
-      />
-      <BookingStack.Screen 
-        name="BookingConfirmation" 
-        component={BookingConfirmationScreen}
-        options={{ title: 'Confirmación' }}
-      />
-    </BookingStack.Navigator>
   );
 }
 
@@ -163,13 +192,7 @@ function RootNavigator() {
           <RootStack.Screen name="AuthStack" component={AuthStackNavigator} />
         </>
       ) : (
-        <>
-          <RootStack.Screen name="MainTabs" component={MainTabsNavigator} />
-          <RootStack.Screen name="ServiceSelection" component={ServiceSelectionScreen} />
-          <RootStack.Screen name="BookingStack" component={BookingStackNavigator} />
-          <RootStack.Screen name="MapScreen" component={MapScreen} />
-          <RootStack.Screen name="AccountSettings" component={AccountSettingsScreen} />
-        </>
+        <RootStack.Screen name="MainTabs" component={MainTabsNavigator} />
       )}
     </RootStack.Navigator>
   );

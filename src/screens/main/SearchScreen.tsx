@@ -3,16 +3,16 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList } from '../../types';
+import { SearchStackParamList } from '../../types';
 
-type SearchScreenNavigationProp = StackNavigationProp<RootStackParamList>;
+type SearchScreenNavigationProp = StackNavigationProp<SearchStackParamList, 'SearchMain'>;
 
 export default function SearchScreen() {
   const navigation = useNavigation<SearchScreenNavigationProp>();
 
   const handleSearchServices = () => {
     console.log('🔍 SearchScreen - Navigating to ServiceSelection');
-    // Navigate to the service selection screen
+    // Navigate within the Search Stack
     navigation.navigate('ServiceSelection');
   };
 
