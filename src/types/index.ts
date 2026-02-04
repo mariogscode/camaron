@@ -75,6 +75,24 @@ export interface Location {
   zipCode: string;
 }
 
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  timestamp?: number;
+}
+
+export interface MapRegion {
+  latitude: number;
+  longitude: number;
+  latitudeDelta: number;
+  longitudeDelta: number;
+}
+
+export interface LocationPermissionStatus {
+  granted: boolean;
+  canAskAgain: boolean;
+}
+
 // Review Types
 export interface Review {
   id: string;

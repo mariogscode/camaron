@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,12 +7,16 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
-  Image
+  Image,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
 import { IconButton, Checkbox } from 'react-native-paper';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { BookingStackParamList } from '../../types';
+import LocationService from '../../services/locationService';
+import { UserLocation } from '../../types';
 
 type ProviderListScreenNavigationProp = StackNavigationProp<BookingStackParamList, 'ProviderList'>;
 type ProviderListScreenRouteProp = RouteProp<BookingStackParamList, 'ProviderList'>;
@@ -28,6 +32,11 @@ interface ServiceProvider {
   profileImage: string;
   isElite: boolean;
   badges: string[];
+  location: {
+    latitude: number;
+    longitude: number;
+    address: string;
+  };
 }
 
 const mockProviders: ServiceProvider[] = [
@@ -41,7 +50,12 @@ const mockProviders: ServiceProvider[] = [
     hourlyRate: 15,
     profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face',
     isElite: true,
-    badges: ['Elite tasker']
+    badges: ['Elite tasker'],
+    location: {
+      latitude: 9.9281, // San José, Costa Rica coordinates
+      longitude: -84.0907,
+      address: 'San José, Costa Rica'
+    }
   },
   {
     id: '2', 
@@ -53,7 +67,12 @@ const mockProviders: ServiceProvider[] = [
     hourlyRate: 8,
     profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=200&h=200&fit=crop&crop=face',
     isElite: true,
-    badges: ['Elite tasker']
+    badges: ['Elite tasker'],
+    location: {
+      latitude: 9.9355,
+      longitude: -84.0825,
+      address: 'Escazú, Costa Rica'
+    }
   },
   {
     id: '3',
@@ -65,7 +84,12 @@ const mockProviders: ServiceProvider[] = [
     hourlyRate: 6.5,
     profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
     isElite: false,
-    badges: ['Regular tasker']
+    badges: ['Regular tasker'],
+    location: {
+      latitude: 9.9250,
+      longitude: -84.1125,
+      address: 'Santa Ana, Costa Rica'
+    }
   }
 ];
 
@@ -80,6 +104,61 @@ export default function ProviderListScreen() {
     tools: false
   });
   const [priceRange, setPriceRange] = useState([0, 15]);
+  const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+  const [nearbyProviders, setNearbyProviders] = useState<(ServiceProvider & { distance: number })[]>([]);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(true);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  useEffect(() => {
+    initializeUserLocation();
+  }, []);
+
+  const initializeUserLocation = async () => {
+    try {
+      setIsLoadingLocation(true);
+      setLocationError(null);
+
+      // Check if we have location permissions
+      const permissions = await LocationService.getLocationPermissionsStatus();
+      
+      if (!permissions.granted) {
+        // Try to request permissions
+        const newPermissions = await LocationService.requestLocationPermissions();
+        
+        if (!newPermissions.granted) {
+          setLocationError('Se requieren permisos de ubicación para mostrar colaboradores cercanos');
+          setNearbyProviders(mockProviders.map(provider => ({ ...provider, distance: 0 })));
+          setIsLoadingLocation(false);
+          return;
+        }
+      }
+
+      // Get user location
+      const location = await LocationService.getCurrentLocation();
+      
+      if (location) {
+        setUserLocation(location);
+        
+        // Filter providers by distance
+        const providersWithDistance = LocationService.filterProvidersByDistance(
+          mockProviders,
+          location,
+          50 // 50km radius
+        );
+        
+        setNearbyProviders(providersWithDistance);
+      } else {
+        setLocationError('No se pudo obtener tu ubicación actual');
+        setNearbyProviders(mockProviders.map(provider => ({ ...provider, distance: 0 })));
+      }
+    } catch (error) {
+      console.error('Error initializing user location:', error);
+      setLocationError('Error al obtener la ubicación');
+      setNearbyProviders(mockProviders.map(provider => ({ ...provider, distance: 0 })));
+    } finally {
+      setIsLoadingLocation(false);
+    }
+  };
 
   const handleBack = () => {
     navigation.goBack();
@@ -101,6 +180,16 @@ export default function ProviderListScreen() {
     return '⭐'.repeat(Math.floor(rating));
   };
 
+  const renderDistance = (distance: number) => {
+    if (distance === 0) return '';
+    
+    if (distance < 1) {
+      return `${Math.round(distance * 1000)}m`;
+    } else {
+      return `${distance}km`;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="white" />
@@ -113,7 +202,24 @@ export default function ProviderListScreen() {
           onPress={handleBack}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Selecciona tu colaborador</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>
+            {isLoadingLocation ? 'Buscando colaboradores...' : 
+             userLocation ? 'Colaboradores cercanos a ti' : 
+             'Selecciona tu colaborador'}
+          </Text>
+          {isLoadingLocation && (
+            <ActivityIndicator size="small" color="#007bff" style={styles.loadingIndicator} />
+          )}
+          {locationError && (
+            <Text style={styles.locationError}>{locationError}</Text>
+          )}
+          {userLocation && nearbyProviders.length > 0 && (
+            <Text style={styles.locationSubtitle}>
+              {nearbyProviders.length} colaboradores encontrados
+            </Text>
+          )}
+        </View>
       </View>
 
       {/* Filters */}
@@ -160,7 +266,7 @@ export default function ProviderListScreen() {
       {/* Providers List */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.providersList}>
-          {mockProviders.map((provider) => (
+          {nearbyProviders.map((provider) => (
             <TouchableOpacity
               key={provider.id}
               style={styles.providerCard}
@@ -180,9 +286,16 @@ export default function ProviderListScreen() {
                     ]}>
                       {provider.title}
                     </Text>
-                    <Text style={styles.providerRating}>
-                      {renderStars(provider.rating)} {provider.rating}
-                    </Text>
+                    <View style={styles.ratingContainer}>
+                      <Text style={styles.providerRating}>
+                        {renderStars(provider.rating)} {provider.rating}
+                      </Text>
+                      {userLocation && provider.distance > 0 && (
+                        <Text style={styles.distanceText}>
+                          • {renderDistance(provider.distance)}
+                        </Text>
+                      )}
+                    </View>
                   </View>
                   <Text style={styles.providerName}>{provider.name}</Text>
                 </View>
@@ -229,6 +342,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
     marginLeft: 8,
+  },
+  headerContent: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  loadingIndicator: {
+    marginLeft: 8,
+  },
+  locationError: {
+    fontSize: 12,
+    color: '#e74c3c',
+    marginTop: 2,
+  },
+  locationSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
   },
   filtersContainer: {
     backgroundColor: 'white',
@@ -345,6 +475,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  ratingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  distanceText: {
+    fontSize: 12,
+    color: '#007bff',
+    fontWeight: '500',
+    marginLeft: 4,
   },
   providerName: {
     fontSize: 18,
